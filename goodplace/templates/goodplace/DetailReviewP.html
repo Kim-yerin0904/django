@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+
+{% block html_header %}
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    <script src="/static/js/list1.js"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6b81d936de12c535aa562332e1734bae"></script>
+{% endblock %}
+
+{% block html_body %}
+    <main>
+        <div class="container py-4">
+            <div class="p-3 mt-5 mb-4 bg-light rounded-3">
+              <div class="container-fluid py-3">
+                <h1 class="display-5 fw-bold">{{ matzip.MatZip_Name }}</h1>
+                <p class="col-md-8 fs-4">{{ matzip.MatZip_DesC }}</p>
+              {% if matzip.MatZip_rating != 0 %}
+                  {% with numerator=matzip.MatZip_rating denominator=matzip.MatZip_review_count %}
+                <p class="col-md-8 fs-4">평점 : {{ numerator|div:denominator }}</p>
+                  {% endwith %}
+              {% else %}
+                <p class="col-md-8 fs-4">평점 : 0</p>
+              {% endif %}
+              </div>
+                <a class="btn btn-primary btn-lg" type="button" href="/goodplace/review/{{ matzip.id }}">후기작성</a>
+            </div>
+
+            <div class="row align-items-md-stretch">
+              <div class="col-md-6">
+                <div class="container-fluid py-5">
+                  <p>영업시간 : {{ matzip.MatZip_Time }}</p>
+                  <p>전화번호 : {{ matzip.MatZip_PhoneN }}</p>
+                  <p>주소 : {{ matzip.MatZip_Address }}</p>
+                </div>
+              </div>
+              <div class="col-md-1">
+                <div class="container-fluid py-2">
+                  <div id="map" style="width:600px;height:300px;"></div>
+                     <script>
+                         var container = document.getElementById('map');
+
+                         var mapOption = {
+                            center: new kakao.maps.LatLng({{matzip.MatZip_latitude}}, {{matzip.MatZip_longitude}}), // 지도의 중심좌표
+                            level: 4 // 지도의 확대 레벨
+                         };
+
+                         var map = new kakao.maps.Map(container, mapOption); // 지도를 생성합니다
+
+                         // 마커가 표시될 위치입니다
+                        var markerPosition  = new kakao.maps.LatLng({{matzip.MatZip_latitude}}, {{matzip.MatZip_longitude}});
+
+                        // 마커를 생성합니다
+                        var marker = new kakao.maps.Marker({
+                            position: markerPosition
+                        });
+
+
+                         marker.setMap(map);
+
+                         var iwContent = '<div style="padding:5px;">{{ matzip.MatZip_Name }}</div>'
+                         iwPosition = new kakao.maps.LatLng({{matzip.MatZip_latitude}}, {{matzip.MatZip_longitude}}); //인포윈도우 표시 위치입니다
+
+                         var infowindow = new kakao.maps.InfoWindow({
+                         position : iwPosition,
+                         content : iwContent
+                         });
+
+                         infowindow.open(map, marker);
+                     </script>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 mb-1 bg-light rounded-3">
+              <h4 class="mb-3">방문후기</h4>
+                  {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="card mt-3 mb-3 mx-5" style="max-width: 1000px;" >
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ review.r_author_nick }}</h5>
+                                    <div class="row align-items-md-stretch">
+                                        <div class="col-md-4">
+                                            <p text-align:left;><strong>평점 : {{ review.r_rating }}</strong></p>
+                                            <p text-align:left;><strong>작성자 : {{ review.r_author }}</strong></p>
+                                         </div>
+                                        <div class="col-md-5">
+                                            <p text-align:right;>작성일자 : {{ review.r_time }}</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">{{ review.r_content }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="text-center">
+                        <h4>아직 후기가 없습니다. 방문 후 후기를 남겨 주세요.</h4>
+                    </div>
+                  {% endif %}
+
+
+              </div>
+
+              <br>
+            <footer class="pt-3 mt-4 text-muted border-top">
+                &copy; 2021
+            </footer>
+        </div>
+    </main>
+
+{% endblock %}

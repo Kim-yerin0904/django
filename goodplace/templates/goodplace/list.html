@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block html_header %}
+    <script src="/static/js/list1.js"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6b81d936de12c535aa562332e1734bae"></script>
+
+<style>
+    .left-box {
+      float: left;
+      width: 50%;
+    }
+    .right-box {
+      float: right;
+      width: 50%;
+    }
+    .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+    .abutton {
+            background-color: #e6e6ff;
+            color: #7b7b7b;
+            font-size: small;
+        }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    .customoverlay {position:relative;bottom:85px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;float:left;}
+    .customoverlay:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}
+    .customoverlay a {display:block;text-decoration:none;color:#000;text-align:center;border-radius:6px;font-size:14px;font-weight:bold;overflow:hidden;background:royalblue;background: royalblue url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/arrow_white.png) no-repeat right 14px center;}
+    .customoverlay .title {display:block;text-align:center;background:#fff;margin-right:35px;padding:10px 15px;font-size:14px;font-weight:bold;}
+    .customoverlay:after {content:'';position:absolute;margin-left:-12px;left:50%;bottom:-12px;width:22px;height:12px;background:url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png')}
+</style>
+{% endblock %}
+
+{% block html_body %}
+<main>
+    <div class="position-relative overflow-hidden p-1 p-md-2 m-md-2 text-center bg-light">
+        <div class="col-md-5 p-lg-3 mx-auto my-5">
+            <form id="searchForm" action="{% url 'goodplace:list_map' %}" method="get">
+                <div class="input-group mb-2">
+                    {% csrf_token %}
+                <input type="search" class="form-control" placeholder="원하는 지역을 입력하세요." value="{{ query|default_if_none:'' }}" aria-label="Recipient's username" aria-describedby="button-addon2" name="q">
+                <button class="btn btn-outline-secondary" type="submit" id="button-addon2">검색</button>
+                </div>
+                <input type="hidden" id="page" name="page" value="{{ board_list.number }}">
+            </form>
+        </div>
+        <div class="product-device shadow-sm d-none d-md-block"></div>
+        <div class="product-device product-device-2 shadow-sm d-none d-md-block"></div>
+    </div>
+
+    <div class='left-box '>
+    {% if board_list %}
+        {%  for data in board_list %}
+        <div class="card mt-3 mb-3 mx-5" style="max-width: 540px;" onclick="intodetail({{ data.id }})">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ data.MatZip_Name }}</h5>
+                        <p class="card-text">{{ data.MatZip_Address }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center">
+        <h4>찾으려는 가게가 없습니다</h4>
+        </div>
+    {% endif %}
+
+    <br>
+        <ul class="pagination justify-content-center">
+            {% if board_list.has_previous %}
+                <li class="page-item"><a class="page-link" data-page="{{ board_list.previous_page_number }}" href="#">이전</a></li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">이전</a></li>
+            {% endif %}
+
+            {% for page in board_list.paginator.page_range %}
+                {% if page >= board_list.number|add:-2 and page <= board_list.number|add:2 %}
+                    <li class="page-item{% if page == board_list.number %} activate" aria-current="page">{% else %}">{% endif %}
+                        <a class="page-link" data-page="{{ page }}" href="#">{{ page }}</a>
+                    </li>
+                {% elif page >= board_list.number|add:-3 and page <= board_list.number|add:3 %}
+                    <li class="page-item"><a class="page-link">..</a></li>
+                {% endif %}
+            {% endfor %}
+
+                {% if board_list.has_next %}
+                <li class="page-item"><a class="page-link" data-page="{{ board_list.next_page_number }}" href="#">다음</a></li>
+                {% else %}
+                <li class="page-item disabled"><a class="page-link" tabindex="-1" href="#">다음</a></li>
+                {% endif %}
+        </ul>
+</div>
+
+<div class='right-box'>
+    <div id="map" style="width:800px;height:600px;"></div>
+     <script>
+         var container = document.getElementById('map');
+         var matzips = new Array();
+         var contents = new Array();
+         var mapOption = {
+            center: new kakao.maps.LatLng(37.5642135, 127.0016985), // 지도의 중심좌표
+            level: 8 // 지도의 확대 레벨
+         };
+
+         var map = new kakao.maps.Map(container, mapOption); // 지도를 생성합니다
+
+         {% for data in board_list %}
+             matzips.push({
+                 title : "{{ data.MatZip_Name }}",
+                 latlng : new kakao.maps.LatLng({{ data.MatZip_latitude }}, {{ data.MatZip_longitude }})
+             })
+             contents.push('<div class="customoverlay"><a href="/goodplace/{{ data.id }}/detail/" target="_blank"><span class="title">{{ data.MatZip_Name }}</span></a></div>');
+
+         {% endfor %}
+
+         for (var i=0; i<matzips.length; i++){
+             // 마커를 생성합니다
+             var marker = new kakao.maps.Marker({
+                 map: map, // 마커를 표시할 지도
+                 position: matzips[i].latlng, // 마커를 표시할 위치
+                 title: matzips[i].title
+             });
+
+             var infowindow = new kakao.maps.CustomOverlay({
+                 map: map, // 마커를 표시할 지도
+                 position: matzips[i].latlng, // 마커를 표시할 위치
+                 content: contents[i], // 인포윈도우에 표시할 내용
+             });
+
+         }
+
+     </script>
+</div>
+</main>
+
+{% endblock %}

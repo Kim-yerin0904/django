@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block html_header %}
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+
+{% endblock %}
+
+{% block html_body %}
+        <div class="container py-4">
+            <div class="p-3 mt-5 mb-4 bg-light rounded-3">
+              <div class="container-fluid py-3">
+                <h1 class="display-5 fw-bold">{{ matzip.MatZip_Name }}</h1>
+                <p class="col-md-8 fs-4">{{ matzip.MatZip_DesC }}</p>
+                <p class="col-md-8 fs-4">평점 : {{ matzip.MatZip_rating }}</p>
+              </div>
+            </div>
+
+            <form method="post" action="/goodplace/review_write/{{ matzip.id }}/">
+                {% csrf_token %}
+            <div class="p-3 mb-1 bg-light rounded-3">
+                <h4 class="mb-3">후기작성</h4>
+
+                <div class="col-sm-6">
+                    <textarea id="r_content" name="r_content" cols="150" rows="10"></textarea></p>
+                </div>
+
+                <h4 class="mb-1">평점</h4>
+                <div class="col-md-1">
+                    <select class="form-select" id="score" name="score">
+                        <option selected>점수</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                </div>
+            <br>
+            <button class="btn btn-primary btn-lg" type="submit">작성완료</button>
+            </div>
+            </form>
+        </div>
+        <br>
+        <footer class="pt-3 mt-4 text-muted border-top">
+                &copy; 2021 TeamKim
+        </footer>
+{% endblock %}
